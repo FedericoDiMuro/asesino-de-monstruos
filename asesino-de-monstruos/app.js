@@ -16,37 +16,85 @@ new Vue({
             return `${salud}%`
         },
         empezarPartida: function () {
+            this.hayUnaPartidaEnJuego = true;
+            this.saludJugador = 100;
+            this.saludMonstruo = 100;
+            this.turnos = [];
         },
         atacar: function () {
+            var herida = this.calcularHeridas(this.rangoAtaque);
+            this.saludMonstruo -= herida;
+            this.turnos.unshift({
+                isPlayer: true,
+                text: 'El jugador golpea al monstruo por ' + herida
+            });
+            if(this.verificarGanador()){
+                return;
+            }
+            this.ataqueDelMonstruo();
         },
 
         ataqueEspecial: function () {
+            var herida = this.calcularHeridas(this.rangoAtaqueEspecial);
+            this.saludMonstruo -= herida;
+            
+            if(this.verificarGanador()){
+                return;
+            }
+            this.ataqueDelMonstruo();
         },
 
         curar: function () {
+            if(this.saludJugador <= 90){
+                this.saludJugador += 10;
+            }
+            else {
+                this.saludJugador = 100;
+            }
+            this.ataqueDelMonstruo();
         },
 
         registrarEvento(evento) {
         },
         terminarPartida: function () {
+            this.hayUnaPartidaEnJuego = false;
         },
 
         ataqueDelMonstruo: function () {
+            var herida = this.calcularHeridas(this.rangoAtaqueDelMonstruo);
+            this.saludJugador -= herida;
+            this.turnos.unshift({
+                isPlayer: false,
+                text: 'El monstruo lastima al jugador en ' + herida
+            });
+            this.verificarGanador();
         },
 
         calcularHeridas: function (rango) {
-            return 0
-
+            return Math.max(Math.floor(Math.random() * rango[1]) + 1, rango[0]);
         },
         verificarGanador: function () {
-            return false;
+            if(this.saludMonstruo <= 0){
+                if(confirm('Ganaste! Jugar de nuevo?')){
+                    this.empezarPartida();
+                }
+                else{
+                    this.hayUnaPartidaEnJuego = false;
+                }
+                return true;
+            } else if(this.saludJugador <= 0){
+                if(confirm('Perdiste! Jugar de nuevo?')){
+                    this.empezarPartida();
+                }
+                else{
+                    this.hayUnaPartidaEnJuego = false;
+                }
+                return true;
+            }
         },
         cssEvento(turno) {
             //Este return de un objeto es prque vue asi lo requiere, pero ponerlo acá queda mucho mas entendible en el codigo HTML.
-            return {
-                'player-turno': turno.esJugador,
-                'monster-turno': !turno.esJugador
-            }
+            return "{'player-turno': turno.esJugador, 'monster-turno': !turno.esJugador}"
         }
     }
 });
